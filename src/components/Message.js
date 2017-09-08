@@ -1,35 +1,15 @@
 import React from 'react'
 
 export default class Message extends React.Component {
-  constructor(props){
-
-    super(props)
-    this.state = {
-      starred: this.props.message.starred,
-      selected: this.props.message.selected
-    }
+  checkboxClicked = (e) => {
+    this.props.messageSelected(this.props.message)
   }
 
   starClicked = (e) => {
-    e.preventDefault()
-    if(this.state.starred){
-      this.setState({
-        starred:false
-      })
-    }
-    else {
-      this.setState({
-        starred:true
-      })
-    }
-  }
-
-  checkboxClicked = (e) => {
-      this.props.messageSelected(this.props.message)
+    this.props.starClicked(this.props.message)
   }
 
   render(){
-
     var containerClassName = "row message unread"
     var selected = ""
     var starClassName = "star fa fa-star-o"
@@ -42,7 +22,7 @@ export default class Message extends React.Component {
       selected = "checked"
     }
 
-    if(this.state.starred)
+    if(this.props.message.starred)
       starClassName = "star fa fa-star"
 
     return(

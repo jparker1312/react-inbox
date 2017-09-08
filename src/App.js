@@ -2,88 +2,46 @@ import React, { Component } from 'react';
 import './App.css';
 import MessageList from './components/MessageList'
 import Toolbar from './components/Toolbar'
-
-var origMessages = [
-  {
-    "id": 1,
-    "subject": "You can't input the protocol without calculating the mobile RSS protocol!",
-    "read": false,
-    "starred": true,
-    "labels": ["dev", "personal"]
-  },
-  {
-    "id": 2,
-    "subject": "connecting the system won't do anything, we need to input the mobile AI panel!",
-    "read": false,
-    "starred": false,
-    "selected": true,
-    "labels": []
-  },
-  {
-    "id": 3,
-    "subject": "Use the 1080p HTTP feed, then you can parse the cross-platform hard drive!",
-    "read": false,
-    "starred": true,
-    "labels": ["dev"]
-  },
-  {
-    "id": 4,
-    "subject": "We need to program the primary TCP hard drive!",
-    "read": true,
-    "starred": false,
-    "selected": true,
-    "labels": []
-  },
-  {
-    "id": 5,
-    "subject": "If we override the interface, we can get to the HTTP feed through the virtual EXE interface!",
-    "read": false,
-    "starred": false,
-    "labels": ["personal"]
-  },
-  {
-    "id": 6,
-    "subject": "We need to back up the wireless GB driver!",
-    "read": true,
-    "starred": true,
-    "labels": []
-  },
-  {
-    "id": 7,
-    "subject": "We need to index the mobile PCI bus!",
-    "read": true,
-    "starred": false,
-    "labels": ["dev", "personal"]
-  },
-  {
-    "id": 8,
-    "subject": "If we connect the sensor, we can get to the HDD port through the redundant IB firewall!",
-    "read": true,
-    "starred": true,
-    "labels": []
-  }
-];
+import ComposeForm from './components/ComposeForm'
 
 export default class App extends Component {
   constructor(props){
       super(props)
-      var unreadMessageCount = 0
-      for(var message of origMessages){
-        if(!message.read)
-          unreadMessageCount++
-      }
-
       this.state = {
-        messages: origMessages,
-        unreadMessageCount: unreadMessageCount,
-        bulkMessageSelected: "fa fa-minus-square-o"
+        messages: [{
+          starred: false,
+          labels:[],
+          id: 1,
+          subject: "",
+          read: false,
+          body: ""
+        }],
+        unreadMessageCount: 0,
+        bulkMessageSelected: "fa fa-minus-square-o",
+        composeFormOpen: false
       }
+  }
+
+  async componentDidMount() {
+    const messagesResponse = await fetch('http://localhost:8888/api/messages')
+    const messagesJson = await messagesResponse.json()
+
+    var unreadMessageCount = 0
+    for(var message of messagesJson._embedded.messages){
+      if(!message.read)
+        unreadMessageCount++
+    }
+
+    this.setState({
+      messages: messagesJson._embedded.messages,
+      unreadMessageCount: unreadMessageCount
+    })
   }
 
   bulkMessagesToggle = (bulkSelected) => {
     const messages = this.state.messages
     for(var message of messages){
-      if(bulkSelected == "fa fa-check-square-o")
+      if(bulkSelected === "fa fa-check-square-o")
         message.selected=true
       else
         message.selected=false
@@ -94,13 +52,20 @@ export default class App extends Component {
     })
   }
 
-  trash = () => {
+  deleteMessage = () => {
     const messages = this.state.messages
     var newMessages = []
     var newUnreadMessageCount = 0
     for(var message of messages){
         if(!message.selected)
           newMessages.push(message)
+        else{
+          const request = {
+            messageIds: [ message.id ],
+            command: "delete"
+          }
+          this.patchRequest(request)
+        }
     }
 
     for(var nm of newMessages){
@@ -120,11 +85,18 @@ export default class App extends Component {
         if(message.selected){
           var labelExists = false
           for(var label of message.labels){
-            if(label == e.target.value)
+            if(label === e.target.value)
               labelExists = true
           }
-          if(!labelExists)
+          if(!labelExists){
             message.labels.push(e.target.value)
+            const request = {
+              messageIds: [ message.id ],
+              command: "addLabel",
+              label: e.target.value
+            }
+            this.patchRequest(request)
+          }
         }
 
     }
@@ -139,10 +111,16 @@ export default class App extends Component {
         if(message.selected){
           var newLabels = []
           for(var label of message.labels){
-            if(label != e.target.value)
+            if(label !== e.target.value)
               newLabels.push(label)
           }
           message.labels = newLabels
+          const request = {
+            messageIds: [ message.id ],
+            command: "removeLabel",
+            label: e.target.value
+          }
+          this.patchRequest(request)
         }
     }
     this.setState({
@@ -158,6 +136,12 @@ export default class App extends Component {
           if(!message.read)
             newUnreadMessageCount--
           message.read=true
+          const request = {
+            messageIds: [ message.id ],
+            command: "read",
+            read: true
+          }
+          this.patchRequest(request)
         }
     }
     this.setState({
@@ -174,6 +158,12 @@ export default class App extends Component {
           if(message.read)
             newUnreadMessageCount++
           message.read=false
+          const request = {
+            messageIds: [ message.id ],
+            command: "read",
+            read: false
+          }
+          this.patchRequest(request)
         }
     }
     this.setState({
@@ -184,9 +174,8 @@ export default class App extends Component {
 
   messageSelected = (message) => {
     const messages = this.state.messages
-
     for(var m of messages){
-      if(m.id == message.id){
+      if(m.id === message.id){
         m.selected=!message.selected;
         break;
       }
@@ -199,9 +188,9 @@ export default class App extends Component {
     }
 
     var bms = this.state.bulkMessageSelected
-    if(numberSelected==0)
+    if(numberSelected === 0)
       bms = "fa fa-square-o"
-    else if (numberSelected == messages.length)
+    else if (numberSelected === messages.length)
       bms = "fa fa-check-square-o"
     else
       bms = "fa fa-minus-square-o"
@@ -214,7 +203,7 @@ export default class App extends Component {
 
   bulkSelect = (e) => {
     var bms = this.state.bulkMessageSelected
-    if(this.state.bulkMessageSelected == "fa fa-check-square-o")
+    if(this.state.bulkMessageSelected === "fa fa-check-square-o")
       bms = "fa fa-square-o"
     else
       bms = "fa fa-check-square-o"
@@ -225,20 +214,76 @@ export default class App extends Component {
     this.bulkMessagesToggle(bms)
   }
 
+  starClicked = async (message) => {
+    var messages = this.state.messages
+    if(message !== undefined){
+      for(var m of messages){
+        if(m.id === message.id){
+          m.starred = !m.starred
+          var request = {
+            messageIds: [ m.id ],
+            command: "star",
+            star: m.starred
+          }
+          this.patchRequest(request)
+          break;
+        }
+      }
+      this.setState({
+        messages: messages
+      })
+    }
+  }
+
+  patchRequest = async (request) => {
+    await fetch('http://localhost:8888/api/messages/', {
+      method: 'PATCH',
+      body: JSON.stringify(request),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      }
+    })
+  }
+
+  toggleComposeForm = (e) => {
+    this.setState({composeFormOpen: !this.state.composeFormOpen})
+  }
+
+  addNewMessage = async (message) => {
+    const messageResponse = await fetch('http://localhost:8888/api/messages/', {
+      method: 'POST',
+      body: JSON.stringify(message),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      }
+    })
+    const messageJson = await messageResponse.json()
+    this.toggleComposeForm()
+    this.setState({
+      messages: [...this.state.messages, messageJson]
+    })
+  }
+
   render() {
     return (
       <div>
         <Toolbar bulkMessagesToggle={this.bulkMessagesToggle}
           markAsRead={this.markAsRead}
           markAsUnread={this.markAsUnread}
-          trash={this.trash}
+          deleteMessage={this.deleteMessage}
           addLabel={this.addLabel}
           removeLabel={this.removeLabel}
           unreadMessageCount={this.state.unreadMessageCount}
           bulkMessageSelected={this.state.bulkMessageSelected}
-          bulkSelect={this.bulkSelect}/>
-        <MessageList messages={this.state.messages} messageSelected={this.messageSelected}/>
-      </div>
-    );
+          bulkSelect={this.bulkSelect}
+          toggleComposeForm={this.toggleComposeForm}/>
+        <ComposeForm composeFormOpen={this.state.composeFormOpen} addNewMessage={this.addNewMessage}/>
+        <MessageList
+          messages={this.state.messages}
+          messageSelected={this.messageSelected}
+          starClicked={this.starClicked}/>
+      </div>);
   }
 }

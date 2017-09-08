@@ -5,10 +5,10 @@ export default class Toolbar extends React.Component {
     var unreadMessageText = "unread messages"
     var disabled = ""
 
-    if(this.props.unreadMessageCount == 1)
+    if(this.props.unreadMessageCount === 1)
       unreadMessageText = "unread message"
 
-    if(this.props.bulkMessageSelected == "fa fa-square-o")
+    if(this.props.bulkMessageSelected === "fa fa-square-o")
       disabled = "disabled"
 
     return (
@@ -18,6 +18,10 @@ export default class Toolbar extends React.Component {
             <span className="badge badge">{this.props.unreadMessageCount}</span>
             {unreadMessageText}
           </p>
+
+          <a className="btn btn-danger">
+            <i onClick={this.props.toggleComposeForm} className="fa fa-plus"></i>
+          </a>
 
           <button className="btn btn-default">
             <i onClick={this.props.bulkSelect} className={this.props.bulkMessageSelected}></i>
@@ -46,7 +50,7 @@ export default class Toolbar extends React.Component {
           </select>
 
           <button className="btn btn-default" disabled={disabled}>
-            <i onClick={this.props.trash} className="fa fa-trash-o"></i>
+            <i onClick={this.props.deleteMessage} className="fa fa-trash-o"></i>
           </button>
         </div>
       </div>
