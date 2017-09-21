@@ -1,49 +1,66 @@
 import React from 'react'
+import {connect} from "react-redux"
+import {bindActionCreators} from 'redux'
+import {changeStarredStatus, toggleMessageSelected} from '../actions'
 
-export default class Message extends React.Component {
-  checkboxClicked = (e) => {
-    this.props.messageSelected(this.props.message)
+const Message = ({message, starClicked, messageSelected, messages}) => {
+
+  const starWasClicked = (e) => {
+    e.preventDefault()
+    starClicked(message)
   }
 
-  starClicked = (e) => {
-    this.props.starClicked(this.props.message)
+  const checkboxClicked = (e) => {
+    messageSelected(message, messages)
   }
 
-  render(){
-    var containerClassName = "row message unread"
-    var selected = ""
-    var starClassName = "star fa fa-star-o"
+  var containerClassName = "row message unread"
+  var selected = ""
+  var starClassName = "star fa fa-star-o"
 
-    if(this.props.message.read)
-      containerClassName = "row message read"
-
-    if(this.props.message.selected){
+  if(message.selected){
       containerClassName += " selected"
       selected = "checked"
-    }
+  }
 
-    if(this.props.message.starred)
+  if(message.read)
+      containerClassName = "row message read"
+
+  if(message.starred)
       starClassName = "star fa fa-star"
 
-    return(
-        <div className ={containerClassName}>
-          <div className="col-xs-1">
-            <div className="row">
-              <div className="col-xs-2">
-                <input onChange={this.checkboxClicked} type="checkbox" checked={selected}/>
-              </div>
-              <div className="col-xs-2">
-                <i onClick={this.starClicked} className={starClassName}></i>
-              </div>
-            </div>
+  return (
+    <div className={containerClassName}>
+      <div className="col-xs-1">
+        <div className="row">
+          <div className="col-xs-2">
+            <input onChange={checkboxClicked} type="checkbox" checked={selected}/>
           </div>
-          <div className="col-xs-11">
-          {this.props.message.labels.map((label,i) => <span key={i} className="label label-warning">{label}</span>)}
-            <a href="#">
-              {this.props.message.subject}
-            </a>
+          <div className="col-xs-2">
+            <i onClick={starWasClicked} className={starClassName}></i>
           </div>
         </div>
-    );
-  }
+      </div>
+      <div className="col-xs-11">
+      {message.labels.map((label,i) => <span key={i} className="label label-warning">{label}</span>)}
+        <a href="#">
+          {message.subject}
+        </a>
+      </div>
+    </div>
+  );
 }
+
+const mapStateToProps = state => ({
+  messages: state.messages
+})
+
+const mapDispatchToProps = dispatch => bindActionCreators({
+  starClicked: changeStarredStatus,
+  messageSelected: toggleMessageSelected,
+}, dispatch)
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Message)

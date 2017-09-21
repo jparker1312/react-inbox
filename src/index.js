@@ -6,6 +6,16 @@ import registerServiceWorker from './registerServiceWorker';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/css/bootstrap-theme.css';
 import 'font-awesome/css/font-awesome.css';
+import store from './store'
+import {Provider} from 'react-redux'
+import {fetchMessages, setupComposeForm} from './actions'
 
-ReactDOM.render(<App />, document.getElementById('root'));
+store.dispatch(fetchMessages())
+store.dispatch(setupComposeForm())
+
+ReactDOM.render(
+  <Provider store={store}>
+    <App />
+  </Provider>,
+  document.getElementById('root'));
 registerServiceWorker();
