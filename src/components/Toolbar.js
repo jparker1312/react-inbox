@@ -2,8 +2,11 @@ import React from 'react'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import {toggleCompForm, bulkMessageClicked, deleteMessage, markAsRead, markAsUnread, addLabel, removeLabel} from '../actions'
+import { Link } from 'react-router-dom'
 
-const Toolbar = ({toggleComposeForm,
+const Toolbar = ({match,
+                  history,
+                  toggleComposeForm,
                   composeForm = {composeFormOpen: false},
                   bulkMessageSelected,
                   messages = {toolbar: {bulkMessageClassName: "fa fa-square-o"}},
@@ -42,9 +45,6 @@ const Toolbar = ({toggleComposeForm,
   var composeFormClassText = "fa fa-plus"
   var numMessagesSelected = ""
 
-  if(composeForm.composeFormOpen === true)
-    composeFormClassText = "fa fa-minus"
-
   if(messages.toolbar.unreadMessageCount === 1)
     unreadMessageText = "unread message"
 
@@ -59,6 +59,13 @@ const Toolbar = ({toggleComposeForm,
   if(messagesSelected === 0)
     disabled = "disabled"
 
+  var composeMessageTo = `/compose`
+  if(history.location.pathname === "/compose"){
+    composeMessageTo = `/`
+    composeFormClassText = "fa fa-minus"
+  }
+
+
   return (
     <div className="row toolbar">
       <div className="col-md-12">
@@ -67,9 +74,9 @@ const Toolbar = ({toggleComposeForm,
           {unreadMessageText}
         </p>
 
-        <a className="btn btn-danger">
+        <Link className="btn btn-danger" to={composeMessageTo}>
           <i onClick={toggComposeForm} className={composeFormClassText}></i>
-        </a>
+        </Link>
 
         <button className="btn btn-default">
           <i onClick={bulkSelect} className={messages.toolbar.bulkMessageClassName}></i>

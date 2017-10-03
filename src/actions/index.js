@@ -249,6 +249,25 @@ export function removeLabel(messages, label){
   }
 }
 
+export const RETRIEVE_MESSAGE = "RETRIEVE_MESSAGE"
+export function retrieveMessageBody(message){
+  var url = "http://localhost:8888/api/messages/" + message.id
+  return async (dispatch) => {
+    const response = await fetch(url)
+    const json = await response.json()
+    const request = {
+      messageIds: [message.id],
+      command: "read",
+      read: true
+    }
+    patchRequest(request)
+    dispatch({
+      type: RETRIEVE_MESSAGE,
+      message: json
+    })
+  }
+}
+
 const patchRequest = async (request) => {
   await fetch(`/api/messages/`, {
     method: 'PATCH',

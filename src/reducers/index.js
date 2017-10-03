@@ -14,7 +14,8 @@ import { MESSAGES_RECEIVED,
          MARK_AS_READ,
          MARK_AS_UNREAD,
          ADD_LABEL,
-         REMOVE_LABEL
+         REMOVE_LABEL,
+         RETRIEVE_MESSAGE
        } from '../actions'
 
 function messages(state = {all: [], toolbar: {bulkMessageClassName: "fa fa-square-o"}}, action) {
@@ -28,6 +29,24 @@ function messages(state = {all: [], toolbar: {bulkMessageClassName: "fa fa-squar
       return {
         ...state,
         all: action.messages, toolbar: {unreadMessageCount: count, bulkMessageClassName: "fa fa-square-o"}
+      }
+    case RETRIEVE_MESSAGE:
+      var currentMessages = state.all
+      var count = 0
+      for(var message of currentMessages){
+        if(message.id === action.message.id){
+          if(!message.read){
+            count--
+            message.read = true
+          }
+          message.body = action.message.body
+          break
+        }
+      }
+      count += state.toolbar.unreadMessageCount
+      return {
+        ...state,
+        all: currentMessages, toolbar: {unreadMessageCount: count, bulkMessageClassName: "fa fa-square-o"}
       }
     case MARK_AS_READ:
       var count = state.toolbar.unreadMessageCount - action.unreadMessageCount
